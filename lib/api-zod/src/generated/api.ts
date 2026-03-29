@@ -64,6 +64,7 @@ export const GetMenuItemsByRestaurantIdResponseItem = zod.object({
     })
     .optional(),
   subgroup: zod.string().nullish(),
+  image_url: zod.string().nullish(),
 });
 export const GetMenuItemsByRestaurantIdResponse = zod.array(
   GetMenuItemsByRestaurantIdResponseItem,
@@ -79,6 +80,7 @@ export const CreateMenuItemBody = zod.object({
   restaurant_id: zod.number(),
   available: zod.boolean(),
   subgroup: zod.string().nullish(),
+  image_url: zod.string().nullish(),
 });
 
 /**
@@ -95,6 +97,7 @@ export const UpdateMenuItemBody = zod.object({
   restaurant_id: zod.number(),
   available: zod.boolean(),
   subgroup: zod.string().nullish(),
+  image_url: zod.string().nullish(),
 });
 
 export const UpdateMenuItemResponse = zod.object({
@@ -126,6 +129,7 @@ export const GetOrderByIdResponse = zod.object({
         })
         .optional(),
       subgroup: zod.string().nullish(),
+      image_url: zod.string().nullish(),
     }),
   ),
   restaurant: zod.object({
@@ -161,6 +165,7 @@ export const GetLastOrdersResponseItem = zod.object({
         })
         .optional(),
       subgroup: zod.string().nullish(),
+      image_url: zod.string().nullish(),
     }),
   ),
   restaurant: zod.object({
@@ -211,6 +216,7 @@ export const UpdateOrderStatusResponse = zod.object({
         })
         .optional(),
       subgroup: zod.string().nullish(),
+      image_url: zod.string().nullish(),
     }),
   ),
   restaurant: zod.object({

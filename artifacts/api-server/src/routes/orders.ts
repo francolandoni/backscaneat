@@ -38,6 +38,7 @@ async function getOrderWithDetails(orderId: number) {
         description: r.menuItems!.description ?? null,
         available: r.menuItems!.available,
         subgroup: r.menuItems!.subgroup ?? null,
+        image_url: r.menuItems!.imageUrl ?? null,
       })),
   };
 }

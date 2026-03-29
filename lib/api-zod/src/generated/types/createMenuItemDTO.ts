@@ -13,4 +13,5 @@ export interface CreateMenuItemDTO {
   restaurant_id: bigint;
   available: boolean;
   subgroup?: string | null;
+  image_url?: string | null;
 }

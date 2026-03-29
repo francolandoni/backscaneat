@@ -382,6 +382,9 @@ components:
         subgroup:
           type: string
           nullable: true
+        image_url:
+          type: string
+          nullable: true
       required:
         - id
         - name
@@ -404,6 +407,9 @@ components:
         available:
           type: boolean
         subgroup:
+          type: string
+          nullable: true
+        image_url:
           type: string
           nullable: true
       required:

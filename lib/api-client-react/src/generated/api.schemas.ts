@@ -26,6 +26,7 @@ export interface MenuItemDTO {
   available: boolean;
   restaurant?: RestaurantDTO;
   subgroup?: string | null;
+  image_url?: string | null;
 }
 
 export interface CreateMenuItemDTO {
@@ -35,6 +36,7 @@ export interface CreateMenuItemDTO {
   restaurant_id: number;
   available: boolean;
   subgroup?: string | null;
+  image_url?: string | null;
 }
 
 export interface OrderDTO {

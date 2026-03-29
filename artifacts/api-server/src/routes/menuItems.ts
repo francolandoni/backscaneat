@@ -15,6 +15,7 @@ function formatMenuItem(
     description: item.description ?? null,
     available: item.available,
     subgroup: item.subgroup ?? null,
+    image_url: item.imageUrl ?? null,
     restaurant: restaurant
       ? { restaurant_id: restaurant.id, name: restaurant.name }
       : undefined,
@@ -51,6 +52,7 @@ router.post("/menu-items/create", async (req, res) => {
     restaurant_id: number;
     available: boolean;
     subgroup?: string;
+    image_url?: string;
   };
 
   try {
@@ -66,6 +68,7 @@ router.post("/menu-items/create", async (req, res) => {
       restaurantId: body.restaurant_id,
       available: body.available ?? true,
       subgroup: body.subgroup ?? null,
+      imageUrl: body.image_url ?? null,
     });
 
     res.status(201).json({ message: `El producto ${body.name} fue creado con éxito` });
@@ -84,6 +87,7 @@ router.put("/menu-items/update/:menuItemId", async (req, res) => {
     restaurant_id?: number;
     available?: boolean;
     subgroup?: string;
+    image_url?: string;
   };
 
   try {
@@ -94,6 +98,7 @@ router.put("/menu-items/update/:menuItemId", async (req, res) => {
     if (body.restaurant_id !== undefined) updateData.restaurantId = body.restaurant_id;
     if (body.available !== undefined) updateData.available = body.available;
     if (body.subgroup !== undefined) updateData.subgroup = body.subgroup;
+    if (body.image_url !== undefined) updateData.imageUrl = body.image_url;
 
     await db
       .update(menuItemsTable)

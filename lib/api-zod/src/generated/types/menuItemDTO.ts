@@ -15,4 +15,5 @@ export interface MenuItemDTO {
   available: boolean;
   restaurant?: RestaurantDTO;
   subgroup?: string | null;
+  image_url?: string | null;
 }

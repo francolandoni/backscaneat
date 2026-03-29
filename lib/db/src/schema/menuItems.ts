@@ -10,6 +10,7 @@ export const menuItemsTable = mysqlTable("menu_items", {
   description: varchar("description", { length: 255 }),
   available: boolean("available").notNull(),
   subgroup: varchar("SUBGROUP", { length: 255 }),
+  imageUrl: varchar("image_url", { length: 2048 }),
   restaurantId: int("restaurant_id").notNull().references(() => restaurantTable.id),
 });
 
