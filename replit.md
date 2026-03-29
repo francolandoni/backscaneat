@@ -52,14 +52,21 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 
 ### `artifacts/api-server` (`@workspace/api-server`)
 
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
+Express 5 API server for Scaneat. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
 
 - Entry: `src/index.ts` — reads `PORT`, starts Express
 - App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
+- Routes mounted in `src/routes/index.ts`:
+  - `health.ts` — `GET /api/healthz`
+  - `restaurants.ts` — `GET /api/ping`, `GET /api/restaurants`, `GET /api/restaurant/:id`
+  - `menuItems.ts` — `GET /api/menu-items/restaurant/:id`, `POST /api/menu-items/create`, `PUT /api/menu-items/update/:id`
+  - `orders.ts` — `GET /api/orders/:id`, `GET /api/orders/last/:restaurantId`, `POST /api/orders`, `PUT /api/orders/:id/status`
+  - `bills.ts` — `POST /api/bill/:restaurantId/:tableId`
+  - `sse.ts` — `GET /api/orders-stream`, `GET /api/bills-stream` (Server-Sent Events)
+- SSE helper: `src/lib/sse.ts` — manages SSE client sets and broadcasts
 - Depends on: `@workspace/db`, `@workspace/api-zod`
 - `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
+- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.mjs`)
 - Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
 
 ### `lib/db` (`@workspace/db`)

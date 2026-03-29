@@ -3,13 +3,21 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Scaneat Restaurant API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: restaurants
+    description: Restaurant operations
+  - name: menu-items
+    description: Menu item operations
+  - name: orders
+    description: Order operations
+  - name: bills
+    description: Bill operations
 paths:
   /healthz:
     get:
@@ -24,6 +32,306 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /ping:
+    get:
+      operationId: ping
+      tags: [health]
+      summary: Ping
+      description: Simple ping endpoint
+      responses:
+        "200":
+          description: pong
+          content:
+            application/json:
+              schema:
+                type: string
+
+  /restaurants:
+    get:
+      operationId: getAllRestaurants
+      tags: [restaurants]
+      summary: Get all restaurants
+      responses:
+        "200":
+          description: List of restaurants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RestaurantDTO"
+        "204":
+          description: No restaurants found
+
+  /restaurant/{restaurantId}:
+    get:
+      operationId: getRestaurantById
+      tags: [restaurants]
+      summary: Get restaurant by ID
+      parameters:
+        - name: restaurantId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Restaurant found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestaurantDTO"
+        "204":
+          description: Restaurant not found
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /menu-items/restaurant/{restaurantId}:
+    get:
+      operationId: getMenuItemsByRestaurantId
+      tags: [menu-items]
+      summary: Get menu items for a restaurant
+      parameters:
+        - name: restaurantId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: List of menu items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MenuItemDTO"
+        "400":
+          description: No items found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /menu-items/create:
+    post:
+      operationId: createMenuItem
+      tags: [menu-items]
+      summary: Create a menu item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMenuItemDTO"
+      responses:
+        "201":
+          description: Menu item created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                type: string
+
+  /menu-items/update/{menuItemId}:
+    put:
+      operationId: updateMenuItem
+      tags: [menu-items]
+      summary: Update a menu item
+      parameters:
+        - name: menuItemId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMenuItemDTO"
+      responses:
+        "200":
+          description: Menu item updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /orders/{orderId}:
+    get:
+      operationId: getOrderById
+      tags: [orders]
+      summary: Get order by ID
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Order found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderDTO"
+        "204":
+          description: Order not found
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /orders/last/{restaurantId}:
+    get:
+      operationId: getLastOrders
+      tags: [orders]
+      summary: Get last orders for a restaurant
+      parameters:
+        - name: restaurantId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OrderDTO"
+        "204":
+          description: No orders found
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /orders:
+    post:
+      operationId: createOrder
+      tags: [orders]
+      summary: Create an order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderDTO"
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderDTO"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /orders/{orderId}/status:
+    put:
+      operationId: updateOrderStatus
+      tags: [orders]
+      summary: Update order status
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderStatusDTO"
+      responses:
+        "200":
+          description: Order updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderDTO"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /bill/{restaurantId}/{tableId}:
+    post:
+      operationId: requestBill
+      tags: [bills]
+      summary: Request a bill for a table
+      parameters:
+        - name: restaurantId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: tableId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Bill requested, returns table number
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int64
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal error
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +342,145 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    RestaurantDTO:
+      type: object
+      properties:
+        restaurant_id:
+          type: integer
+          format: int64
+        name:
+          type: string
+      required:
+        - restaurant_id
+        - name
+
+    MenuItemDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        price:
+          type: number
+        description:
+          type: string
+          nullable: true
+        available:
+          type: boolean
+        restaurant:
+          $ref: "#/components/schemas/RestaurantDTO"
+        subgroup:
+          type: string
+          nullable: true
+      required:
+        - id
+        - name
+        - price
+        - available
+
+    CreateMenuItemDTO:
+      type: object
+      properties:
+        name:
+          type: string
+        price:
+          type: number
+        description:
+          type: string
+          nullable: true
+        restaurant_id:
+          type: integer
+          format: int64
+        available:
+          type: boolean
+        subgroup:
+          type: string
+          nullable: true
+      required:
+        - name
+        - price
+        - restaurant_id
+        - available
+
+    OrderDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        date:
+          type: string
+          format: date-time
+        extra_fields:
+          type: string
+          nullable: true
+        menu_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/MenuItemDTO"
+        restaurant:
+          $ref: "#/components/schemas/RestaurantDTO"
+        table_number:
+          type: integer
+          format: int64
+        status:
+          type: string
+      required:
+        - id
+        - table_number
+        - status
+        - restaurant
+        - menu_items
+
+    CreateOrderDTO:
+      type: object
+      properties:
+        restaurant_id:
+          type: integer
+          format: int64
+        menu_items_ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+        extra_fields:
+          type: string
+          nullable: true
+        table_number:
+          type: integer
+          format: int64
+      required:
+        - restaurant_id
+        - menu_items_ids
+        - table_number
+
+    OrderStatusDTO:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    BillDTO:
+      type: object
+      properties:
+        restaurant_id:
+          type: integer
+          format: int64
+        table_number:
+          type: integer
+          format: int64
+      required:
+        - restaurant_id
+        - table_number
