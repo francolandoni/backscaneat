@@ -2,11 +2,11 @@ import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import * as schema from "./schema";
 
-const connectionString = process.env.DB_CONNECTION;
+const connectionString = process.env.DB_CONNECTION_EC2;
 
 if (!connectionString) {
   throw new Error(
-    "DB_CONNECTION must be set. Configure your MySQL connection string.",
+    "DB_CONNECTION_EC2 must be set. Configure your MySQL connection string.",
   );
 }
 

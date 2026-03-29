@@ -1,14 +1,14 @@
 import { defineConfig } from "drizzle-kit";
 import path from "path";
 
-if (!process.env.DB_CONNECTION) {
-  throw new Error("DB_CONNECTION must be set");
+if (!process.env.DB_CONNECTION_EC2) {
+  throw new Error("DB_CONNECTION_EC2 must be set");
 }
 
 export default defineConfig({
   schema: path.join(__dirname, "./src/schema/index.ts"),
   dialect: "mysql",
   dbCredentials: {
-    url: process.env.DB_CONNECTION,
+    url: process.env.DB_CONNECTION_EC2,
   },
 });

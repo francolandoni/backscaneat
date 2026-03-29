@@ -30,8 +30,8 @@ COPY --from=builder /app/artifacts/api-server/dist ./dist
 
 ENV NODE_ENV=production
 ENV PORT=8080
-# DB_CONNECTION must be provided at runtime, e.g.:
-# docker run -e DB_CONNECTION="mysql://user:pass@host:3306/db" ...
+# DB_CONNECTION_EC2 must be provided at runtime, e.g.:
+# docker run -e DB_CONNECTION_EC2="mysql://user:pass@host:3306/db" ...
 
 EXPOSE 8080
 
