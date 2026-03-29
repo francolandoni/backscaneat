@@ -1,41 +1,40 @@
 import { Router, type IRouter } from "express";
-import { db } from "@workspace/db";
-import { ordersTable, menuItemsTable, orderMenuItemsTable, restaurantsTable } from "@workspace/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { db, eq, desc } from "@workspace/db";
+import { ordersTable, menuItemsTable, orderItemsTable, restaurantTable } from "@workspace/db/schema";
 import { sseNotifyOrder } from "../lib/sse";
 
 const router: IRouter = Router();
 
-async function getOrderWithDetails(orderId: bigint) {
+async function getOrderWithDetails(orderId: number) {
   const [order] = await db
     .select()
     .from(ordersTable)
-    .leftJoin(restaurantsTable, eq(ordersTable.restaurantId, restaurantsTable.id))
+    .leftJoin(restaurantTable, eq(ordersTable.restaurantId, restaurantTable.id))
     .where(eq(ordersTable.id, orderId));
 
   if (!order) return null;
 
   const menuItemRows = await db
     .select({ menuItems: menuItemsTable })
-    .from(orderMenuItemsTable)
-    .leftJoin(menuItemsTable, eq(orderMenuItemsTable.menuItemId, menuItemsTable.id))
-    .where(eq(orderMenuItemsTable.orderId, orderId));
+    .from(orderItemsTable)
+    .leftJoin(menuItemsTable, eq(orderItemsTable.menuItemId, menuItemsTable.id))
+    .where(eq(orderItemsTable.orderId, orderId));
 
   return {
-    id: Number(order.orders.id),
+    id: order.orders.id,
     date: order.orders.date,
     extra_fields: order.orders.extraFields ?? null,
-    table_number: Number(order.orders.tableNumber),
+    table_number: order.orders.tableNumber,
     status: order.orders.status,
-    restaurant: order.restaurants
-      ? { restaurant_id: Number(order.restaurants.id), name: order.restaurants.name }
+    restaurant: order.restaurant
+      ? { restaurant_id: order.restaurant.id, name: order.restaurant.name }
       : { restaurant_id: 0, name: "" },
     menu_items: menuItemRows
       .filter((r) => r.menuItems !== null)
       .map((r) => ({
-        id: Number(r.menuItems!.id),
+        id: r.menuItems!.id,
         name: r.menuItems!.name,
-        price: parseFloat(r.menuItems!.price),
+        price: r.menuItems!.price,
         description: r.menuItems!.description ?? null,
         available: r.menuItems!.available,
         subgroup: r.menuItems!.subgroup ?? null,
@@ -44,7 +43,7 @@ async function getOrderWithDetails(orderId: bigint) {
 }
 
 router.get("/orders/:orderId", async (req, res) => {
-  const orderId = BigInt(req.params.orderId);
+  const orderId = Number(req.params.orderId);
   try {
     const order = await getOrderWithDetails(orderId);
     if (!order) {
@@ -59,7 +58,7 @@ router.get("/orders/:orderId", async (req, res) => {
 });
 
 router.get("/orders/last/:restaurantId", async (req, res) => {
-  const restaurantId = BigInt(req.params.restaurantId);
+  const restaurantId = Number(req.params.restaurantId);
   try {
     const orders = await db
       .select()
@@ -95,31 +94,25 @@ router.post("/orders", async (req, res) => {
       return;
     }
 
-    const [order] = await db
-      .insert(ordersTable)
-      .values({
-        restaurantId: BigInt(body.restaurant_id),
-        tableNumber: BigInt(body.table_number),
-        extraFields: body.extra_fields ?? null,
-        status: "PENDING",
-      })
-      .returning();
+    const [result] = await db.insert(ordersTable).values({
+      restaurantId: body.restaurant_id,
+      tableNumber: body.table_number,
+      extraFields: body.extra_fields ?? null,
+      status: "PENDING",
+    });
 
-    if (!order) {
-      res.status(400).send();
-      return;
-    }
+    const orderId = result.insertId;
 
     if (body.menu_items_ids.length > 0) {
-      await db.insert(orderMenuItemsTable).values(
+      await db.insert(orderItemsTable).values(
         body.menu_items_ids.map((itemId) => ({
-          orderId: order.id,
-          menuItemId: BigInt(itemId),
+          orderId,
+          menuItemId: itemId,
         }))
       );
     }
 
-    const detailed = await getOrderWithDetails(order.id);
+    const detailed = await getOrderWithDetails(orderId);
     if (!detailed) {
       res.status(400).send();
       return;
@@ -134,20 +127,14 @@ router.post("/orders", async (req, res) => {
 });
 
 router.put("/orders/:orderId/status", async (req, res) => {
-  const orderId = BigInt(req.params.orderId);
+  const orderId = Number(req.params.orderId);
   const body = req.body as { status: string };
 
   try {
-    const [updated] = await db
+    await db
       .update(ordersTable)
       .set({ status: body.status })
-      .where(eq(ordersTable.id, orderId))
-      .returning();
-
-    if (!updated) {
-      res.status(400).send();
-      return;
-    }
+      .where(eq(ordersTable.id, orderId));
 
     const detailed = await getOrderWithDetails(orderId);
     if (!detailed) {

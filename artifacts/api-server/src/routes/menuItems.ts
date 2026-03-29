@@ -1,31 +1,33 @@
 import { Router, type IRouter } from "express";
-import { db } from "@workspace/db";
-import { menuItemsTable, restaurantsTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { db, eq } from "@workspace/db";
+import { menuItemsTable, restaurantTable } from "@workspace/db/schema";
 
 const router: IRouter = Router();
 
-function formatMenuItem(item: typeof menuItemsTable.$inferSelect, restaurant?: typeof restaurantsTable.$inferSelect) {
+function formatMenuItem(
+  item: typeof menuItemsTable.$inferSelect,
+  restaurant?: typeof restaurantTable.$inferSelect,
+) {
   return {
-    id: Number(item.id),
+    id: item.id,
     name: item.name,
-    price: parseFloat(item.price),
+    price: item.price,
     description: item.description ?? null,
     available: item.available,
     subgroup: item.subgroup ?? null,
     restaurant: restaurant
-      ? { restaurant_id: Number(restaurant.id), name: restaurant.name }
+      ? { restaurant_id: restaurant.id, name: restaurant.name }
       : undefined,
   };
 }
 
 router.get("/menu-items/restaurant/:restaurantId", async (req, res) => {
-  const restaurantId = BigInt(req.params.restaurantId);
+  const restaurantId = Number(req.params.restaurantId);
   try {
     const rows = await db
       .select()
       .from(menuItemsTable)
-      .leftJoin(restaurantsTable, eq(menuItemsTable.restaurantId, restaurantsTable.id))
+      .leftJoin(restaurantTable, eq(menuItemsTable.restaurantId, restaurantTable.id))
       .where(eq(menuItemsTable.restaurantId, restaurantId));
 
     if (rows.length === 0) {
@@ -34,7 +36,7 @@ router.get("/menu-items/restaurant/:restaurantId", async (req, res) => {
       });
       return;
     }
-    res.json(rows.map((r) => formatMenuItem(r.menu_items, r.restaurants ?? undefined)));
+    res.json(rows.map((r) => formatMenuItem(r.menu_items, r.restaurant ?? undefined)));
   } catch (err) {
     req.log.error({ err }, "Error fetching menu items");
     res.status(500).json({ message: "Internal server error" });
@@ -57,23 +59,16 @@ router.post("/menu-items/create", async (req, res) => {
       return;
     }
 
-    const [created] = await db
-      .insert(menuItemsTable)
-      .values({
-        name: body.name,
-        price: String(body.price),
-        description: body.description ?? null,
-        restaurantId: BigInt(body.restaurant_id),
-        available: body.available ?? true,
-        subgroup: body.subgroup ?? null,
-      })
-      .returning();
+    await db.insert(menuItemsTable).values({
+      name: body.name,
+      price: body.price,
+      description: body.description ?? null,
+      restaurantId: body.restaurant_id,
+      available: body.available ?? true,
+      subgroup: body.subgroup ?? null,
+    });
 
-    if (!created) {
-      res.status(500).json("Ocurrió un error al crear el producto.");
-      return;
-    }
-    res.status(201).json({ message: `El producto ${created.name} fue creado con éxito` });
+    res.status(201).json({ message: `El producto ${body.name} fue creado con éxito` });
   } catch (err) {
     req.log.error({ err }, "Error creating menu item");
     res.status(400).json({ message: "Error al crear el producto" });
@@ -81,7 +76,7 @@ router.post("/menu-items/create", async (req, res) => {
 });
 
 router.put("/menu-items/update/:menuItemId", async (req, res) => {
-  const menuItemId = BigInt(req.params.menuItemId);
+  const menuItemId = Number(req.params.menuItemId);
   const body = req.body as {
     name?: string;
     price?: number;
@@ -94,20 +89,24 @@ router.put("/menu-items/update/:menuItemId", async (req, res) => {
   try {
     const updateData: Partial<typeof menuItemsTable.$inferInsert> = {};
     if (body.name !== undefined) updateData.name = body.name;
-    if (body.price !== undefined) updateData.price = String(body.price);
+    if (body.price !== undefined) updateData.price = body.price;
     if (body.description !== undefined) updateData.description = body.description;
-    if (body.restaurant_id !== undefined) updateData.restaurantId = BigInt(body.restaurant_id);
+    if (body.restaurant_id !== undefined) updateData.restaurantId = body.restaurant_id;
     if (body.available !== undefined) updateData.available = body.available;
     if (body.subgroup !== undefined) updateData.subgroup = body.subgroup;
 
-    const [updated] = await db
+    await db
       .update(menuItemsTable)
       .set(updateData)
-      .where(eq(menuItemsTable.id, menuItemId))
-      .returning();
+      .where(eq(menuItemsTable.id, menuItemId));
+
+    const [updated] = await db
+      .select()
+      .from(menuItemsTable)
+      .where(eq(menuItemsTable.id, menuItemId));
 
     if (!updated) {
-      res.status(500).json("Ocurrió un error al actualizar el producto.");
+      res.status(500).json({ message: "Ocurrió un error al actualizar el producto." });
       return;
     }
     res.json({ message: `El producto ${updated.name} fue actualizado con éxito` });

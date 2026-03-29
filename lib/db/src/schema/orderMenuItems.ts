@@ -1,14 +1,11 @@
-import { pgTable, bigint, primaryKey } from "drizzle-orm/pg-core";
+import { mysqlTable, int } from "drizzle-orm/mysql-core";
 import { ordersTable } from "./orders";
 import { menuItemsTable } from "./menuItems";
 
-export const orderMenuItemsTable = pgTable(
-  "order_menu_items",
-  {
-    orderId: bigint("order_id", { mode: "bigint" }).notNull().references(() => ordersTable.id),
-    menuItemId: bigint("menu_item_id", { mode: "bigint" }).notNull().references(() => menuItemsTable.id),
-  },
-  (table) => [primaryKey({ columns: [table.orderId, table.menuItemId] })]
-);
+export const orderItemsTable = mysqlTable("order_items", {
+  id: int("id").autoincrement().primaryKey(),
+  orderId: int("order_id").references(() => ordersTable.id),
+  menuItemId: int("menu_item_id").references(() => menuItemsTable.id),
+});
 
-export type OrderMenuItem = typeof orderMenuItemsTable.$inferSelect;
+export type OrderItem = typeof orderItemsTable.$inferSelect;

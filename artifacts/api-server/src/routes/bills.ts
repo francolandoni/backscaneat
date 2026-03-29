@@ -1,27 +1,26 @@
 import { Router, type IRouter } from "express";
-import { db } from "@workspace/db";
-import { ordersTable, restaurantsTable } from "@workspace/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { db, eq, and } from "@workspace/db";
+import { ordersTable, restaurantTable } from "@workspace/db/schema";
 import { sseNotifyBill } from "../lib/sse";
 
 const router: IRouter = Router();
 
 router.post("/bill/:restaurantId/:tableId", async (req, res) => {
-  const restaurantId = BigInt(req.params.restaurantId);
-  const tableId = BigInt(req.params.tableId);
+  const restaurantId = Number(req.params.restaurantId);
+  const tableId = Number(req.params.tableId);
 
   try {
     const [restaurant] = await db
       .select()
-      .from(restaurantsTable)
-      .where(eq(restaurantsTable.id, restaurantId));
+      .from(restaurantTable)
+      .where(eq(restaurantTable.id, restaurantId));
 
     if (!restaurant) {
       res.status(400).json({ message: "Restaurante no encontrado" });
       return;
     }
 
-    const pendingOrders = await db
+    const activeOrders = await db
       .select()
       .from(ordersTable)
       .where(
@@ -29,21 +28,20 @@ router.post("/bill/:restaurantId/:tableId", async (req, res) => {
           eq(ordersTable.restaurantId, restaurantId),
           eq(ordersTable.tableNumber, tableId)
         )
-      )
-      .orderBy(desc(ordersTable.date));
+      );
 
-    if (pendingOrders.length === 0) {
+    if (activeOrders.length === 0) {
       res.status(400).json({ message: "No hay órdenes activas para esta mesa" });
       return;
     }
 
     const bill = {
-      restaurant_id: Number(restaurantId),
-      table_number: Number(tableId),
+      restaurant_id: restaurantId,
+      table_number: tableId,
     };
 
     sseNotifyBill(bill);
-    res.status(200).json(Number(tableId));
+    res.status(200).json(tableId);
   } catch (err) {
     req.log.error({ err }, "Error requesting bill");
     res.status(500).send();
