@@ -2,13 +2,15 @@ import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import * as schema from "./schema";
 
-if (!process.env.DATABASE_URL) {
+const connectionString = process.env.DB_CONNECTION;
+
+if (!connectionString) {
   throw new Error(
-    "DATABASE_URL must be set. Configure your MySQL connection string.",
+    "DB_CONNECTION must be set. Configure your MySQL connection string.",
   );
 }
 
-const pool = mysql.createPool(process.env.DATABASE_URL);
+const pool = mysql.createPool(connectionString);
 export const db = drizzle(pool, { schema, mode: "default" });
 
 export * from "./schema";
